@@ -71,5 +71,13 @@
     function handleInteraction(e, key) {
         e.preventDefault();
         key.classList.add('active');
-
         playNote(key.dataset.note);
+    }
+    keys.forEach(key => {
+        key.addEventListener('mousedown', (e) => handleInteraction(e, key));
+        key.addEventListener('touchstart', (e) => handleInteraction(e, key), {passive: false});
+        ['mouseup', 'mouseleave', 'touchend'].forEach(t => key.addEventListener(t, () => key.classList.remove('active')));
+    });
+</script>
+</body>
+</html>
