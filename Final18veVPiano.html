@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ColibriKinetix Compact Piano</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 5px 0;
+            background: #ffffff; 
+            font-family: sans-serif; 
+            touch-action: none; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .piano { 
+            display: flex; 
+            position: relative; 
+            user-select: none;
+            width: fit-content;
+            background: #ffffff;
+        }
+        .key { 
+            border: 1px solid #000; 
+            box-sizing: border-box; 
+            cursor: pointer; 
+            transition: all 0.1s; 
+            position: relative; 
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* Portrait (Vertical) - Compact Heights */
+        .white { width: 50px; height: 120px; background: white; border-radius: 0 0 4px 4px; z-index: 1; }
+        .white.active { background: #00d4ff; box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.7); }
+
+        .black { 
+            width: 30px; height: 75px; background: #333; 
+            margin-left: -15px; margin-right: -15px; 
+            z-index: 2; border-radius: 0 0 2px 2px; 
+        }
+        .black.active { background: #ff007f; box-shadow: inset 0 0 10px rgba(255, 0, 127, 0.7); }
+
+        .label { position: absolute; bottom: 5px; font-size: 11px; color: #bbb; pointer-events: none; }
+
+        /* LANDSCAPE (Horizontal) - Ultra Short to fit with Audio Player */
+        @media (orientation: landscape) {
+            .white { height: 80px; width: 45px; } 
+            .black { height: 50px; width: 28px; margin-left: -14px; margin-right: -14px; }
+            .label { font-size: 10px; bottom: 3px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="piano">
+    <div class="key white" data-note="C4"><span class="label">C</span></div>
+    <div class="key black" data-note="C#4"></div>
+    <div class="key white" data-note="D4"><span class="label">D</span></div>
+    <div class="key black" data-note="D#4"></div>
+    <div class="key white" data-note="E4"><span class="label">E</span></div>
+    <div class="key white" data-note="F4"><span class="label">F</span></div>
+    <div class="key black" data-note="F#4"></div>
+    <div class="key white" data-note="G4"><span class="label">G</span></div>
+    <div class="key black" data-note="G#4"></div>
+    <div class="key white" data-note="A4"><span class="label">A</span></div>
+    <div class="key black" data-note="A#4"></div>
+    <div class="key white" data-note="B4"><span class="label">B</span></div>
+</div>
+
+<script>
+    const keys = document.querySelectorAll('.key');
+    let audioCtx;
+    const frequencies = { "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63, "F4": 349.23, "F#4": 369.99, "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88 };
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playNote(note) {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = frequencies[note];
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+    }
+
+    function handleInteraction(e, key) {
+        e.preventDefault();
+        key.classList.add('active');
+        playNote(key.dataset.note);
+    }
+
+    keys.forEach(key => {
+        key.addEventListener('mousedown', (e) => handleInteraction(e, key));
+        key.addEventListener('touchstart', (e) => handleInteraction(e, key), {passive: false});
+        ['mouseup', 'mouseleave', 'touchend'].forEach(t => key.addEventListener(t, () => key.classList.remove('active')));
+    });
+</script>
+</body>
+</html>
