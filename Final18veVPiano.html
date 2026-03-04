@@ -3,29 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>1 Octave Virtual Piano</title>
+    <title>ColibriKinetix Adaptive Piano</title>
     <style>
         body { 
             margin: 0; padding: 0; background: #ffffff; font-family: sans-serif; 
-            touch-action: none; display: flex; justify-content: center; align-items: flex-start;
-            height: 100vh; overflow: hidden;
+            touch-action: none; display: flex; justify-content: center; 
+            align-items: flex-start; height: 100vh; overflow: hidden;
         }
-        .piano { display: flex; position: relative; user-select: none; width: fit-content; background: #ffffff; padding: 5px; }
+        .piano { display: flex; position: relative; user-select: none; width: fit-content; background: #ffffff; }
         .key { border: 1px solid #000; box-sizing: border-box; cursor: pointer; transition: all 0.1s; position: relative; }
         
-        /* Portrait: Standard compact height */
-        .white { width: 50px; height: 120px; background: white; border-radius: 0 0 4px 4px; z-index: 1; }
-        .white.active { background: #00d4ff; box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.7); }
-        .black { width: 30px; height: 75px; background: #333; margin-left: -15px; margin-right: -15px; z-index: 2; border-radius: 0 0 2px 2px; }
-        .black.active { background: #ff007f; box-shadow: inset 0 0 10px rgba(255, 0, 127, 0.7); }
-        .label { position: absolute; bottom: 5px; font-size: 11px; color: #bbb; pointer-events: none; }
-
-        /* Landscape: ULTRA COMPACT to fit with Audio Player */
-        @media (orientation: landscape) {
-            .white { height: 60px; width: 45px; } /* Much shorter height */
-            .black { height: 35px; width: 28px; margin-left: -14px; margin-right: -14px; }
-            .label { font-size: 0; } /* Hides labels in landscape to save space */
+        /* --- VERTICAL (Portrait) --- */
+        /* Long, professional keys to fill the vertical space */
+        @media (orientation: portrait) {
+            .white { width: 55px; height: 220px; background: white; border-radius: 0 0 6px 6px; z-index: 1; }
+            .black { width: 36px; height: 130px; background: #333; margin-left: -18px; margin-right: -18px; z-index: 2; border-radius: 0 0 3px 3px; }
+            .label { position: absolute; bottom: 10px; font-size: 14px; color: #bbb; pointer-events: none; text-align: center; width: 100%; }
         }
+
+        /* --- HORIZONTAL (Landscape) --- */
+        /* Ultra-short keys to fit under the audio player */
+        @media (orientation: landscape) {
+            .white { height: 70px; width: 45px; background: white; border-radius: 0 0 4px 4px; z-index: 1; }
+            .black { height: 40px; width: 28px; margin-left: -14px; margin-right: -14px; z-index: 2; border-radius: 0 0 2px 2px; }
+            .label { display: none; } /* Hide labels to save vertical pixels */
+        }
+
+        /* Active Glow Effects */
+        .white.active { background: #00d4ff; box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.8); }
+        .black.active { background: #ff007f; box-shadow: inset 0 0 15px rgba(255, 0, 127, 0.8); }
     </style>
 </head>
 <body>
@@ -39,7 +45,7 @@
     <div class="key black" data-note="F#4"></div>
     <div class="key white" data-note="G4"><span class="label">G</span></div>
     <div class="key black" data-note="G#4"></div>
-    <div class="key white" data-note="A4"><span class="label: label">A</span></div>
+    <div class="key white" data-note="A4"><span class="label">A</span></div>
     <div class="key black" data-note="A#4"></div>
     <div class="key white" data-note="B4"><span class="label">B</span></div>
 </div>
@@ -66,12 +72,3 @@
         e.preventDefault();
         key.classList.add('active');
         playNote(key.dataset.note);
-    }
-    keys.forEach(key => {
-        key.addEventListener('mousedown', (e) => handleInteraction(e, key));
-        key.addEventListener('touchstart', (e) => handleInteraction(e, key), {passive: false});
-        ['mouseup', 'mouseleave', 'touchend'].forEach(t => key.addEventListener(t, () => key.classList.remove('active')));
-    });
-</script>
-</body>
-</html>
