@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ColibriKinetix Adaptive Piano</title>
+    <title>1 Octave Adaptive Piano</title>
     <style>
         body { 
             margin: 0; padding: 0; background: #ffffff; font-family: sans-serif; 
@@ -71,4 +71,5 @@
     function handleInteraction(e, key) {
         e.preventDefault();
         key.classList.add('active');
+
         playNote(key.dataset.note);
