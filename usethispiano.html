@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1 Octave Adaptive Piano</title>
+    <style>
+        body { margin: 0; padding: 0; background: #ffffff; font-family: sans-serif; touch-action: none; display: flex; justify-content: center; align-items: flex-start; height: 100vh; overflow: hidden; }
+        .piano { display: flex; position: relative; user-select: none; width: fit-content; background: #ffffff; }
+        .key { border: 1px solid #000; box-sizing: border-box; cursor: pointer; transition: all 0.1s; position: relative; }
+        
+        /* --- VERTICAL (Portrait) --- */
+        @media (orientation: portrait) {
+            .white { width: 55px; height: 220px; background: white; border-radius: 0 0 6px 6px; z-index: 1; }
+            .black { width: 36px; height: 130px; background: #333; margin-left: -18px; margin-right: -18px; z-index: 2; border-radius: 0 0 3px 3px; }
+            .label { position: absolute; bottom: 10px; font-size: 14px; color: #888; background: #eee; border-radius: 50%; width: 24px; height: 24px; line-height: 24px; text-align: center; left: 50%; transform: translateX(-50%); pointer-events: none; }
+        }
+
+        /* --- HORIZONTAL (Landscape) --- */
+        @media (orientation: landscape) {
+            .white { height: 70px; width: 45px; background: white; border-radius: 0 0 4px 4px; z-index: 1; }
+            .black { height: 40px; width: 28px; margin-left: -14px; margin-right: -14px; z-index: 2; border-radius: 0 0 2px 2px; }
+            .label { display: none; } 
+        }
+
+        .white.active { background: #00d4ff; box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.8); }
+        .black.active { background: #ff007f; box-shadow: inset 0 0 15px rgba(255, 0, 127, 0.8); }
+    </style>
+</head>
+<body>
+<div class="piano">
+    <div class="key white" data-note="C4"><span class="label">C</span></div>
+    <div class="key black" data-note="C#4"></div>
+    <div class="key white" data-note="D4"><span class="label">D</span></div>
+    <div class="key black" data-note="D#4"></div>
+    <div class="key white" data-note="E4"><span class="label">E</span></div>
+    <div class="key white" data-note="F4"><span class="label">F</span></div>
+    <div class="key black" data-note="F#4"></div>
+    <div class="key white" data-note="G4"><span class="label">G</span></div>
+    <div class="key black" data-note="G#4"></div>
+    <div class="key white" data-note="A4"><span class="label">A</span></div>
+    <div class="key black" data-note="A#4"></div>
+    <div class="key white" data-note="B4"><span class="label">B</span></div>
+</div>
+<script>
+    const keys = document.querySelectorAll('.key');
+    let audioCtx;
+    const frequencies = { "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63, "F4": 349.23, "F#4": 369.99, "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88 };
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function playNote(note) {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = frequencies[note];
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+    }
+    function handleInteraction(e, key) {
+        e.preventDefault();
+        key.classList.add('active');
+        playNote(key.dataset.note);
+    }
+    keys.forEach(key => {
+        key.addEventListener('mousedown', (e) => handleInteraction(e, key));
+        key.addEventListener('touchstart', (e) => handleInteraction(e, key), {passive: false});
+        ['mouseup', 'mouseleave', 'touchend'].forEach(t => key.addEventListener(t, () => key.classList.remove('active')));
+    });
+</script>
+</body>
+</html>
