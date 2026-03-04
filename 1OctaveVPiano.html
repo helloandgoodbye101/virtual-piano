@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1 Octave Virtual Piano</title>
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: #1a1a1a; 
+            font-family: sans-serif; 
+            touch-action: none; /* Disables all browser gestures for better control */
+            overflow: hidden;
+        }
+        .piano { display: flex; position: relative; user-select: none; }
+        .key { border: 1px solid #000; box-sizing: border-box; cursor: pointer; transition: all 0.1s; position: relative; }
+        
+        /* Desktop/Standard Sizes */
+        .white { width: 60px; height: 200px; background: white; border-radius: 0 0 5px 5px; z-index: 1; }
+        .white.active { background: #00d4ff; box-shadow: 0 0 25px #00d4ff; transform: translateY(2px); }
+
+        .black { width: 40px; height: 120px; background: #333; margin-left: -20px; margin-right: -20px; z-index: 2; border-radius: 0 0 3px 3px; }
+        .black.active { background: #ff007f; box-shadow: 0 0 25px #ff007f; transform: translateY(2px); }
+
+        .label { position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 14px; color: #888; pointer-events: none; }
+
+        /* MOBILE PORTRAIT (Normal phone view) */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .white { width: 14vw; height: 35vh; } /* Uses % of screen width/height */
+            .black { width: 10vw; height: 20vh; margin-left: -5vw; margin-right: -5vw; }
+            .label { font-size: 18px; font-weight: bold; }
+        }
+
+        /* MOBILE LANDSCAPE (Sideways view - The Fix!) */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .white { width: 8vw; height: 50vh; } /* Shorter keys to fit under the header */
+            .black { width: 5vw; height: 30vh; margin-left: -2.5vw; margin-right: -2.5vw; }
+            .label { font-size: 12px; bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="piano">
+    <div class="key white" data-note="C4"><span class="label">C</span></div>
+    <div class="key black" data-note="C#4"></div>
+    <div class="key white" data-note="D4"><span class="label">D</span></div>
+    <div class="key black" data-note="D#4"></div>
+    <div class="key white" data-note="E4"><span class="label">E</span></div>
+    <div class="key white" data-note="F4"><span class="label">F</span></div>
+    <div class="key black" data-note="F#4"></div>
+    <div class="key white" data-note="G4"><span class="label">G</span></div>
+    <div class="key black" data-note="G#4"></div>
+    <div class="key white" data-note="A4"><span class="label">A</span></div>
+    <div class="key black" data-note="A#4"></div>
+    <div class="key white" data-note="B4"><span class="label">B</span></div>
+</div>
+
+<script>
+    const keys = document.querySelectorAll('.key');
+    let audioCtx;
+
+    const frequencies = { 
+        "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, 
+        "E4": 329.63, "F4": 349.23, "F#4": 369.99, "G4": 392.00, 
+        "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88 
+    };
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playNote(note) {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = frequencies[note];
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.2);
+    }
+
+    function handleInteraction(e, key) {
+        e.preventDefault(); 
+        if (!key.classList.contains('active')) {
+            key.classList.add('active');
+            playNote(key.dataset.note);
+        }
+    }
+
+    function stopInteraction(key) {
+        key.classList.remove('active');
+    }
+
+    keys.forEach(key => {
+        key.addEventListener('mousedown', (e) => handleInteraction(e, key));
+        key.addEventListener('touchstart', (e) => handleInteraction(e, key), {passive: false});
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            key.addEventListener(evt, () => stopInteraction(key));
+        });
+    });
+</script>
+</body>
+</html>
