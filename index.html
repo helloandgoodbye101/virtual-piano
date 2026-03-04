@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColibriKinetix Virtual Piano</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a1a; font-family: sans-serif; }
+        .piano { display: flex; position: relative; }
+        .key { border: 1px solid #000; box-sizing: border-box; cursor: pointer; transition: all 0.1s; position: relative; }
+        
+        /* White Keys */
+        .white { width: 60px; height: 200px; background: white; border-radius: 0 0 5px 5px; z-index: 1; }
+        .white.active { background: #00d4ff; box-shadow: 0 0 20px #00d4ff; transform: translateY(2px); }
+
+        /* Black Keys */
+        .black { width: 40px; height: 120px; background: #333; margin-left: -20px; margin-right: -20px; z-index: 2; border-radius: 0 0 3px 3px; }
+        .black.active { background: #ff007f; box-shadow: 0 0 20px #ff007f; transform: translateY(2px); }
+
+        .label { position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 12px; color: #888; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div class="piano">
+    <div class="key white" data-note="C4"><span class="label">C</span></div>
+    <div class="key black" data-note="C#4"></div>
+    <div class="key white" data-note="D4"><span class="label">D</span></div>
+    <div class="key black" data-note="D#4"></div>
+    <div class="key white" data-note="E4"><span class="label">E</span></div>
+    <div class="key white" data-note="F4"><span class="label">F</span></div>
+    <div class="key black" data-note="F#4"></div>
+    <div class="key white" data-note="G4"><span class="label">G</span></div>
+    <div class="key black" data-note="G#4"></div>
+    <div class="key white" data-note="A4"><span class="label">A</span></div>
+    <div class="key black" data-note="A#4"></div>
+    <div class="key white" data-note="B4"><span class="label">B</span></div>
+</div>
+
+<script>
+    const keys = document.querySelectorAll('.key');
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playNote(note) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        // Simple frequency mapping
+        const frequencies = { "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63, "F4": 349.23, "F#4": 369.99, "G4": 392.00, "G#4": 415.30, "A4": 440.00, "A#4": 466.16, "B4": 493.88 };
+        
+        osc.frequency.value = frequencies[note];
+        osc.type = 'triangle'; 
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1);
+    }
+
+    keys.forEach(key => {
+        key.addEventListener('mousedown', () => {
+            key.classList.add('active');
+            playNote(key.dataset.note);
+        });
+        key.addEventListener('mouseup', () => key.classList.remove('active'));
+        key.addEventListener('mouseleave', () => key.classList.remove('active'));
+    });
+</script>
+
+</body>
+</html>
