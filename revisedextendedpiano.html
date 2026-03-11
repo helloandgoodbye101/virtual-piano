@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Virtual Piano F3-E5</title>
+    <style>
+        body { margin: 0; padding: 0; background: #ffffff; display: flex; justify-content: center; align-items: flex-start; height: 100vh; overflow-x: auto; overflow-y: hidden; -webkit-tap-highlight-color: transparent; }
+        .piano { display: flex; position: relative; padding: 20px 10px; margin: 0 auto; width: fit-content; user-select: none; }
+        .key { border: 1px solid #000; box-sizing: border-box; cursor: pointer; position: relative; }
+        .white { width: 40px; height: 160px; background: white; border-radius: 0 0 5px 5px; z-index: 1; }
+        .white.active { background: #00d4ff !important; box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.7); }
+        .black { width: 28px; height: 100px; background: #111 !important; margin-left: -14px; margin-right: -14px; z-index: 2; border-radius: 0 0 3px 3px; }
+        .black.active { background: #ff007f !important; box-shadow: inset 0 0 15px rgba(255, 0, 127, 0.7); }
+        .label { position: absolute; bottom: 12px; width: 100%; text-align: center; font-size: 12px; font-weight: bold; color: #888; pointer-events: none; text-transform: uppercase; font-family: sans-serif; }
+        @media screen and (orientation: landscape) { .white { height: 110px; } .black { height: 70px; } .label { font-size: 10px; bottom: 8px; } }
+    </style>
+</head>
+<body>
+<div class="piano">
+    <div class="key white" data-note="F3"><span class="label">F</span></div>
+    <div class="key black" data-note="F#3"></div>
+    <div class="key white" data-note="G3"><span class="label">G</span></div>
+    <div class="key black" data-note="G#3"></div>
+    <div class="key white" data-note="A3"><span class="label">A</span></div>
+    <div class="key black" data-note="A#3"></div>
+    <div class="key white" data-note="B3"><span class="label">B</span></div>
+    <div class="key white" data-note="C4"><span class="label">C</span></div>
+    <div class="key black" data-note="C#4"></div>
+    <div class="key white" data-note="D4"><span class="label">D</span></div>
+    <div class="key black" data-note="D#4"></div>
+    <div class="key white" data-note="E4"><span class="label">E</span></div>
+    <div class="key white" data-note="F4"><span class="label">F</span></div>
+    <div class="key black" data-note="F#4"></div>
+    <div class="key white" data-note="G4"><span class="label">G</span></div>
+    <div class="key black" data-note="G#4"></div>
+    <div class="key white" data-note="A4"><span class="label">A</span></div>
+    <div class="key black" data-note="A#4"></div>
+    <div class="key white" data-note="B4"><span class="label">B</span></div>
+    <div class="key white" data-note="C5"><span class="label">C</span></div>
+    <div class="key black" data-note="C#5"></div>
+    <div class="key white" data-note="D5"><span class="label">D</span></div>
+    <div class="key black" data-note="D#5"></div>
+    <div class="key white" data-note="E5"><span class="label">E</span></div>
+</div>
+
+<script>
+    const keys = document.querySelectorAll('.key');
+    let audioCtx;
+    
+    const freqMap = { 
+        "F3": 174.61, "F#3": 185.00, "G3": 196.00, "G#3": 207.65, "A3": 220.00, "A#3": 233.08, "B3": 246.94,
+        "C4": 261.63, "C#4": 277.18, "D4": 293.66, "D#4": 311.13, "E4": 329.63, 
+        "F4": 349.23, "F#4": 369.99, "G4": 392.00, "G#4": 415.30, "A4": 440.00, 
+        "A#4": 466.16, "B4": 493.88, "C5": 523.25, "C#5": 554.37, "D5": 587.33, 
+        "D#5": 622.25, "E5": 659.25 
+    };
+
+    function playPianoNote(frequency) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const gainNode = audioCtx.createGain();
+        gainNode.connect(audioCtx.destination);
+
+        const oscs = [
+            {type: 'sine', vol: 0.15},
+            {type: 'triangle', vol: 0.1}
+        ].map(config => {
+            const osc = audioCtx.createOscillator();
+            osc.type = config.type;
+            osc.frequency.setValueAtTime(frequency, now);
+            osc.connect(gainNode);
+            osc.start(now);
+            osc.stop(now + 0.8);
+            return osc;
+        });
+
+        // REVERTED TO ORIGINAL SNAPPY ENVELOPE
+        gainNode.gain.cancelScheduledValues(now);
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02); // Faster Attack
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.6); // Faster Decay
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.65); // Faster Stop
+    }
+
+    function startNote(e) {
+        if (e.type === 'touchstart') e.preventDefault();
+        const key = e.currentTarget;
+        if(!key.classList.contains('active')) {
+            key.classList.add('active');
+            playPianoNote(freqMap[key.dataset.note]);
+        }
+    }
+
+    function endNote(e) {
+        e.currentTarget.classList.remove('active');
+    }
+
+    keys.forEach(k => {
+        k.addEventListener('mousedown', startNote);
+        k.addEventListener('touchstart', startNote, {passive: false});
+        ['mouseup', 'mouseleave', 'touchend'].forEach(type => k.addEventListener(type, endNote));
+    });
+</script>
+</body>
+</html>
